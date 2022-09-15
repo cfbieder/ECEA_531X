@@ -11,7 +11,11 @@
 // For example: Service_1 for camera frame aquisition
 //              Service_2 for image analysis and timestamping
 //              Service_3 for image processing (difference images)
-
+//              Service_4 for save time-stamped image to file service
+//              Service_5 for save processed image to file service
+//              Service_6 for send image to remote server to save copy
+//              Service_7 for elapsed time in syslog each minute for debug
+//
 
 #define _GNU_SOURCE
 
@@ -39,7 +43,7 @@
 #define FIB_ITER (100)
 
 //****************************************
-//Modified to only run 3 processes
+//Modify to only run 3 processes
 //****************************************
 #define NUM_THREADS (3+1)
 
@@ -53,7 +57,6 @@ typedef struct
     int threadIdx;
     int event_time;
     char *service_name;
-    int debug_output;
     unsigned long long sequencePeriods;
 } threadParams_t;
 
@@ -89,7 +92,7 @@ int main(void)
     //clear system log
     system("echo > /dev/null | sudo tee /var/log/syslog");
     //log username
-    system("logger [COURSE:2][ASSIGNMENT:1]: `uname -a`");
+    system("logger [COURSE:1][ASSIGNMENT:3]: `uname -a`");
 
 
     gettimeofday(&start_time_val, (struct timezone *)0);
@@ -163,7 +166,6 @@ int main(void)
     rt_param[1].sched_priority=rt_max_prio-1;
     threadParams[1].event_time = 10;
     threadParams[1].service_name = "Seq 1";
-    threadParams[1].debug_output = FALSE;
     pthread_attr_setschedparam(&rt_sched_attr[1], &rt_param[1]);
     rc=pthread_create(&threads[1],               // pointer to thread descriptor
                       &rt_sched_attr[1],         // use specific attributes
@@ -182,7 +184,6 @@ int main(void)
     rt_param[2].sched_priority=rt_max_prio-2;
     threadParams[2].event_time = 20;
     threadParams[2].service_name = "Seq 2";
-    threadParams[2].debug_output = FALSE;
     pthread_attr_setschedparam(&rt_sched_attr[2], &rt_param[2]);
     rc=pthread_create(&threads[2], &rt_sched_attr[2], Service_2, (void *)&(threadParams[2]));
     if(rc < 0)
@@ -196,9 +197,6 @@ int main(void)
     // Service_3 = RT_MAX-3	@ 0.5 Hz
     //
     rt_param[3].sched_priority=rt_max_prio-3;
-    threadParams[3].event_time = 10;
-    threadParams[3].service_name = "Seq 3";
-    threadParams[3].debug_output = TRUE;
     pthread_attr_setschedparam(&rt_sched_attr[3], &rt_param[3]);
     rc=pthread_create(&threads[3], &rt_sched_attr[3], Service_3, (void *)&(threadParams[3]));
     if(rc < 0)
@@ -242,7 +240,9 @@ int main(void)
 void *Sequencer(void *threadp)
 {
     struct timeval current_time_val;
-
+    //********************************
+    // MOdified delay time to 20 msec
+    //********************************
 
     //NOTE: timespec in seconds and nanoseconds
     struct timespec delay_time = {0,10000000}; // delay for 10 msec, 100 Hz
@@ -285,8 +285,8 @@ void *Sequencer(void *threadp)
 
 
         seqCnt++;
-        gettimeofday(&current_time_val, (struct timezone *)0);
-        printf("Sequencer cycle %llu @ sec=%d, msec=%d\n", seqCnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        //gettimeofday(&current_time_val, (struct timezone *)0);
+        ///printf("Sequencer cycle %llu @ sec=%d, msec=%d\n", seqCnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
 
         if(delay_cnt > 1) printf("Sequencer looping delay %d\n", delay_cnt);
@@ -356,7 +356,6 @@ void FIB_TEST(int seqCnt, int iterCnt)
 
 
 
-
      //double current_time;
      unsigned long long S1Cnt=0;
      threadParams_t *threadParams = (threadParams_t *)threadp;
@@ -365,8 +364,7 @@ void FIB_TEST(int seqCnt, int iterCnt)
 
      gettimeofday(&current_time_val, (struct timezone *)0);
      //syslog(LOG_CRIT, "%s thread @ sec=%d, msec=%d\n", ser_name,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-     if (threadParams->debug_output)
-      printf("%s thread @ sec=%d, msec=%d\n", ser_name, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+     printf("%s thread @ sec=%d, msec=%d\n", ser_name, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
 
 
@@ -377,21 +375,17 @@ void FIB_TEST(int seqCnt, int iterCnt)
 
          gettimeofday(&current_time_val, (struct timezone *)0);
          start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
-         if (threadParams->debug_output)
-          printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+         printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
          run_time = (int)getTimeMsec()+event_time;
 
 
          while ((int)getTimeMsec() < run_time) {
            FIB_TEST(FIB_ITER, FIB_TEST_CYCLES);
          }
-
-         if (threadParams->debug_output) {
-           gettimeofday(&current_time_val, (struct timezone *)0);
-           printf("# Service %s Finish %llu @ sec=%d, msec=%d\n", ser_name, S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-           end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
-           printf("# Service %s Run time %llu @, msec=%d\n",ser_name, S1Cnt,end_time-start_time);
-         }
+         gettimeofday(&current_time_val, (struct timezone *)0);
+         printf("# Service %s Finish %llu @ sec=%d, msec=%d\n", ser_name, S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+         end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
+         printf("# Service %s Run time %llu @, msec=%d\n",ser_name, S1Cnt,end_time-start_time);
          //syslog(LOG_CRIT, "# Service S1 %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
      }
 
@@ -399,8 +393,51 @@ void FIB_TEST(int seqCnt, int iterCnt)
  }
 
 
+
+void *Service_1_old(void *threadp)
+{
+    struct timeval current_time_val;
+    double event_time;
+    int run_time=10.0; //set run time for 10 milliseconds
+    int start_time, end_time;
+
+
+    //double current_time;
+    unsigned long long S1Cnt=0;
+    //threadParams_t *threadParams = (threadParams_t *)threadp;
+
+    gettimeofday(&current_time_val, (struct timezone *)0);
+    syslog(LOG_CRIT, "S1 thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    printf("S1 thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+
+
+
+    while(!abortS1)
+    {
+        sem_wait(&semS1);
+        S1Cnt++;
+
+        gettimeofday(&current_time_val, (struct timezone *)0);
+        start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
+        printf("# Service S1 Start %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        event_time = (int)getTimeMsec()+run_time;
+
+
+        while ((int)getTimeMsec() < event_time) {
+          FIB_TEST(FIB_ITER, FIB_TEST_CYCLES);
+        }
+        gettimeofday(&current_time_val, (struct timezone *)0);
+        printf("# Service S1 Finish %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
+        printf("# Service S1 Run time %llu @, msec=%d\n",S1Cnt,end_time-start_time);
+        //syslog(LOG_CRIT, "# Service S1 %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    }
+
+    pthread_exit((void *)0);
+}
+
 /*****************************************************************************
-* Service 2
+* Service 1
 ******************************************************************************/
 
 
@@ -421,8 +458,7 @@ void *Service_2(void *threadp )
 
     gettimeofday(&current_time_val, (struct timezone *)0);
     //syslog(LOG_CRIT, "%s thread @ sec=%d, msec=%d\n", ser_name,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-    if (threadParams->debug_output)
-      printf("%s thread @ sec=%d, msec=%d\n", ser_name, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    printf("%s thread @ sec=%d, msec=%d\n", ser_name, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
 
 
@@ -433,53 +469,56 @@ void *Service_2(void *threadp )
 
         gettimeofday(&current_time_val, (struct timezone *)0);
         start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
-        if (threadParams->debug_output)
-          printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S2Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S2Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
         run_time = (int)getTimeMsec()+event_time;
 
 
         while ((int)getTimeMsec() < run_time) {
           FIB_TEST(FIB_ITER, FIB_TEST_CYCLES);
         }
-
-        if (threadParams->debug_output) {
-          gettimeofday(&current_time_val, (struct timezone *)0);
-          printf("# Service %s Finish %llu @ sec=%d, msec=%d\n", ser_name, S2Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-          end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
-          printf("# Service %s Run time %llu @, msec=%d\n",ser_name, S2Cnt,end_time-start_time);
-        }
+        gettimeofday(&current_time_val, (struct timezone *)0);
+        printf("# Service %s Finish %llu @ sec=%d, msec=%d\n", ser_name, S2Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
+        printf("# Service %s Run time %llu @, msec=%d\n",ser_name, S2Cnt,end_time-start_time);
         //syslog(LOG_CRIT, "# Service S1 %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
     }
 
     pthread_exit((void *)0);
 }
 
-/*****************************************************************************
-* Service 3
-******************************************************************************/
-
-
-void *Service_3(void *threadp )
+void *Service_2_old(void *threadp)
 {
     struct timeval current_time_val;
-    int start_time, end_time;
-    int event_time,run_time;
-    char *ser_name;
-
-
-
     //double current_time;
-    unsigned long long S3Cnt=0;
-    threadParams_t *threadParams = (threadParams_t *)threadp;
-    event_time  = threadParams->event_time;
-    ser_name = threadParams->service_name;
+    unsigned long long S2Cnt=0;
+    //threadParams_t *threadParams = (threadParams_t *)threadp;
 
     gettimeofday(&current_time_val, (struct timezone *)0);
-    //syslog(LOG_CRIT, "%s thread @ sec=%d, msec=%d\n", ser_name,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-    if (threadParams->debug_output)
-      printf("%s thread @ sec=%d, msec=%d\n", ser_name, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    syslog(LOG_CRIT, "S2 thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    printf("S2 thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
+    while(!abortS2)
+    {
+        sem_wait(&semS2);
+        S2Cnt++;
 
+        gettimeofday(&current_time_val, (struct timezone *)0);
+        //syslog(LOG_CRIT, "## Service S2 %llu @ sec=%d, msec=%d\n", S2Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    }
+
+    pthread_exit((void *)0);
+}
+
+void *Service_3(void *threadp)
+{
+    struct timeval current_time_val;
+    //double current_time;
+    unsigned long long S3Cnt=0;
+    //threadParams_t *threadParams = (threadParams_t *)threadp;
+
+    gettimeofday(&current_time_val, (struct timezone *)0);
+    syslog(LOG_CRIT, "S3 thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    printf("S3 thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
     while(!abortS3)
     {
@@ -487,28 +526,11 @@ void *Service_3(void *threadp )
         S3Cnt++;
 
         gettimeofday(&current_time_val, (struct timezone *)0);
-        start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
-        if (threadParams->debug_output)
-          printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S3Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-        run_time = (int)getTimeMsec()+event_time;
-
-
-        while ((int)getTimeMsec() < run_time) {
-          FIB_TEST(FIB_ITER, FIB_TEST_CYCLES);
-        }
-        if (threadParams->debug_output) {
-          gettimeofday(&current_time_val, (struct timezone *)0);
-          printf("# Service %s Finish %llu @ sec=%d, msec=%d\n", ser_name, S3Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-          end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
-          printf("# Service %s Run time %llu @, msec=%d\n",ser_name, S3Cnt,end_time-start_time);
-        }
-        //syslog(LOG_CRIT, "# Service S1 %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        //syslog(LOG_CRIT, "### Service S3 %llu @ sec=%d, msec=%d\n", S3Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
     }
 
     pthread_exit((void *)0);
 }
-
-
 
 
 
