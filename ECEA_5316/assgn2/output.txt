@@ -1,0 +1,24 @@
+Sep 15 13:10:04 localhost root: [COURSE:2][ASSIGNMENT:2]: Linux localhost 5.4.0-125-generic #141-Ubuntu SMP Wed Aug 10 13:42:03 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 1 @ sec=0, msec=988 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 2 @ sec=1, msec=11 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 2 start 1 @ sec=1, msec=45 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 3 @ sec=1, msec=31 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 4 @ sec=1, msec=54 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 2 start 2 @ sec=1, msec=94 on core 1
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 5 @ sec=1, msec=74 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 6 @ sec=1, msec=99 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 7 @ sec=1, msec=119 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 3 start 1 @ sec=1, msec=152 on core 1
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 2 start 3 @ sec=1, msec=153 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 8 @ sec=1, msec=142 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 9 @ sec=1, msec=164 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 10 @ sec=1, msec=193 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 2 start 4 @ sec=1, msec=215 on core 1
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 11 @ sec=1, msec=214 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 12 @ sec=1, msec=241 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 2 start 5 @ sec=1, msec=273 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 13 @ sec=1, msec=263 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 14 @ sec=1, msec=283 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 1 start 15 @ sec=1, msec=304 on core 0
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 2 start 6 @ sec=1, msec=326 on core 1
+Sep 15 13:10:05 localhost seqgen: [COURSE:2][ASSIGNMENT:2]: Thread 3 start 2 @ sec=1, msec=335 on core 0

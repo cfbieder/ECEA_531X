@@ -38,6 +38,8 @@
 #define FIB_TEST_CYCLES (100)
 #define FIB_ITER (100)
 
+#define ASSIGNMENT (2)
+
 //****************************************
 //Modified to only run 3 processes
 //****************************************
@@ -89,8 +91,11 @@ int main(void)
     //clear system log
     system("echo > /dev/null | sudo tee /var/log/syslog");
     //log username
-    system("logger [COURSE:2][ASSIGNMENT:1]: `uname -a`");
-
+    char buffer[60];
+    int max_len = sizeof(buffer);
+    snprintf(buffer,max_len, "logger [COURSE:%d][ASSIGNMENT:2]: `uname -a`",ASSIGNMENT);
+    //system("logger [COURSE:2][ASSIGNMENT:2]: `uname -a`");
+    system(buffer);
 
     gettimeofday(&start_time_val, (struct timezone *)0);
     gettimeofday(&current_time_val, (struct timezone *)0);
@@ -301,7 +306,7 @@ void *Sequencer(void *threadp)
         if((seqCnt % 2) == 0) sem_post(&semS1);
 
         // Service_2 = RT_MAX-2	@ every 100 msec
-        if((seqCnt % 10) == 0) sem_post(&semS2);
+        if((seqCnt % 5) == 0) sem_post(&semS2);
 
         // Service_3 = RT_MAX-3	@ every 150 msec
         if((seqCnt % 15) == 0) sem_post(&semS3);
@@ -376,7 +381,7 @@ void FIB_TEST(int seqCnt, int iterCnt)
          sem_wait(&semS1);
          S1Cnt++;
          cpucore=sched_getcpu();
-         syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:1]: Thread 1 start %llu @ sec=%d, msec=%d on core %d",
+         syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 1 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
             S1Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
          gettimeofday(&current_time_val, (struct timezone *)0);
          start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
@@ -435,7 +440,7 @@ void *Service_2(void *threadp )
         S2Cnt++;
         cpucore=sched_getcpu();
         gettimeofday(&current_time_val, (struct timezone *)0);
-        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:1]: Thread 2 start %llu @ sec=%d, msec=%d on core %d",
+        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 2 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
            S2Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
 
 
@@ -494,7 +499,7 @@ void *Service_3(void *threadp )
         S3Cnt++;
         cpucore=sched_getcpu();
         gettimeofday(&current_time_val, (struct timezone *)0);
-        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:1]: Thread 3 start %llu @ sec=%d, msec=%d on core %d",
+        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 3 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
            S3Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
 
 
