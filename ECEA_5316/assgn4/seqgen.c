@@ -1,6 +1,7 @@
 // Sam Siewert, December 2017
 //
 // Updated June 2020 for signal driven example
+//
 // Sequencer Generic
 //
 // The purpose of this code is to provide an example for how to best
@@ -10,11 +11,9 @@
 // For example: Service_1 for camera frame aquisition
 //              Service_2 for image analysis and timestamping
 //              Service_3 for image processing (difference images)
-//
 // Modified: Chris Biedermann
 // September 2022
-// Assignment 1
-
+// Assignment 4
 
 #define _GNU_SOURCE
 
@@ -42,23 +41,22 @@
 #define FIB_TEST_CYCLES (100)
 #define FIB_ITER (100)
 
-
+#define ASSIGNMENT (4)
 
 //****************************************
-//Modified to only run 3 processes
+//Modified to  run 4 processes
 //****************************************
-#define NUM_THREADS (3+1)
+#define NUM_THREADS (4+1)
 
 int abortTest=FALSE;
 int abortS1=FALSE, abortS2=FALSE, abortS3=FALSE, abortS4=FALSE, abortS5=FALSE, abortS6=FALSE, abortS7=FALSE;
 sem_t semS1, semS2, semS3, semS4, semS5, semS6, semS7;
 struct timeval start_time_val;
 
-//Define Structure of data to pass in to each thread
 typedef struct
 {
     int threadIdx;
-    int event_time; //define how many microseconds each
+    int event_time;
     char *service_name;
     int debug_output;
     unsigned long long sequencePeriods;
@@ -66,9 +64,13 @@ typedef struct
 
 
 void *Sequencer(void *threadp);
+
+
 void *Service_1(void *threadp);
 void *Service_2(void *threadp);
 void *Service_3(void *threadp);
+void *Service_4(void *threadp);
+
 double getTimeMsec(void);
 void print_scheduler(void);
 
@@ -81,7 +83,7 @@ int main(void)
     pthread_t threads[NUM_THREADS];
     threadParams_t threadParams[NUM_THREADS];
     pthread_attr_t rt_sched_attr[NUM_THREADS];
-    int rt_max_prio, rt_min_prio, cpuidx;
+    int rt_max_prio, rt_min_prio;
     struct sched_param rt_param[NUM_THREADS];
     struct sched_param main_param;
     pthread_attr_t main_attr;
@@ -93,8 +95,11 @@ int main(void)
     //clear system log
     system("echo > /dev/null | sudo tee /var/log/syslog");
     //log username
-    system("logger [COURSE:2][ASSIGNMENT:1]: `uname -a`");
-
+    char buffer[60];
+    int max_len = sizeof(buffer);
+    snprintf(buffer,max_len, "logger [COURSE:2][ASSIGNMENT:%d]: `uname -a`",ASSIGNMENT);
+    //system("logger [COURSE:2][ASSIGNMENT:2]: `uname -a`");
+    system(buffer);
 
     gettimeofday(&start_time_val, (struct timezone *)0);
     gettimeofday(&current_time_val, (struct timezone *)0);
@@ -102,24 +107,26 @@ int main(void)
 
     printf("System has %d processors configured and %d available.\n", get_nprocs_conf(), get_nprocs());
 
-
-    //set up the CPU sets for use by the scheduler
     CPU_ZERO(&allcpuset);
+
     for(i=0; i < NUM_CPU_CORES; i++)
         CPU_SET(i, &allcpuset);
+
     printf("Using CPUS=%d from total available.\n", CPU_COUNT(&allcpuset));
 
 
     // initialize the sequencer semaphores
+    //
     if (sem_init (&semS1, 0, 0)) { printf ("Failed to initialize S1 semaphore\n"); exit (-1); }
     if (sem_init (&semS2, 0, 0)) { printf ("Failed to initialize S2 semaphore\n"); exit (-1); }
     if (sem_init (&semS3, 0, 0)) { printf ("Failed to initialize S3 semaphore\n"); exit (-1); }
+    if (sem_init (&semS4, 0, 0)) { printf ("Failed to initialize S4 semaphore\n"); exit (-1); }
 
     mainpid=getpid();
 
-    //set the scheduleing priorities
     rt_max_prio = sched_get_priority_max(SCHED_FIFO);
     rt_min_prio = sched_get_priority_min(SCHED_FIFO);
+
     rc=sched_getparam(mainpid, &main_param);
     main_param.sched_priority=rt_max_prio;
     rc=sched_setscheduler(getpid(), SCHED_FIFO, &main_param);
@@ -140,11 +147,8 @@ int main(void)
     for(i=0; i < NUM_THREADS; i++)
     {
 
-      //set up the CPU for CPU #3 to be used by threads
       CPU_ZERO(&threadcpu);
       CPU_SET(1, &threadcpu);
-
-
 
       rc=pthread_attr_init(&rt_sched_attr[i]);
       rc=pthread_attr_setinheritsched(&rt_sched_attr[i], PTHREAD_EXPLICIT_SCHED);
@@ -162,7 +166,7 @@ int main(void)
     // Create Service threads which will block awaiting release for:
     //
 
-    // Servcie_1 = RT_MAX-1	run for 10 microseconds
+    // Servcie_1 = RT_MAX-1	@ 3 Hz
     //
     rt_param[1].sched_priority=rt_max_prio-1;
     threadParams[1].event_time = 10;
@@ -181,7 +185,7 @@ int main(void)
         printf("pthread_create successful for service 1\n");
 
 
-    // Service_2 = RT_MAX-2	run for 10 microseconds
+    // Service_2 = RT_MAX-2	@ 1 Hz
     //
     rt_param[2].sched_priority=rt_max_prio-2;
     threadParams[2].event_time = 10;
@@ -196,14 +200,28 @@ int main(void)
 
 
 
-    // Service_3 = RT_MAX-3	@ 0run for 20 microseconds
+
+    // Service_3 = RT_MAX-3	@ 0.5 Hz
     //
     rt_param[3].sched_priority=rt_max_prio-3;
-    threadParams[3].event_time = 20;
+    threadParams[3].event_time = 10;
     threadParams[3].service_name = "Seq 3";
     threadParams[3].debug_output = FALSE;
     pthread_attr_setschedparam(&rt_sched_attr[3], &rt_param[3]);
     rc=pthread_create(&threads[3], &rt_sched_attr[3], Service_3, (void *)&(threadParams[3]));
+    if(rc < 0)
+        perror("pthread_create for service 3");
+    else
+        printf("pthread_create successful for service 3\n");
+
+    // Service_4 = RT_MAX-3	@ 0.5 Hz
+    //
+    rt_param[4].sched_priority=rt_max_prio-4;
+    threadParams[4].event_time = 20;
+    threadParams[4].service_name = "Seq 4";
+    threadParams[4].debug_output = FALSE;
+    pthread_attr_setschedparam(&rt_sched_attr[4], &rt_param[4]);
+    rc=pthread_create(&threads[4], &rt_sched_attr[4], Service_4, (void *)&(threadParams[4]));
     if(rc < 0)
         perror("pthread_create for service 3");
     else
@@ -217,16 +235,15 @@ int main(void)
     // correct POSIX SCHED_FIFO priorities compared to non-RT priority of this main
     // program.
     //
-    //usleep(1000000);
+    // usleep(1000000);
 
     // Create Sequencer thread, which like a cyclic executive, is highest prio
     printf("Start sequencer\n");
-    threadParams[0].sequencePeriods=30;
+    threadParams[0].sequencePeriods=13;
 
     // run sequencer on core 0
     CPU_ZERO(&threadcpu);
-    cpuidx=(0);
-    CPU_SET(cpuidx, &threadcpu);
+    CPU_SET(0, &threadcpu);
     rc=pthread_attr_setaffinity_np(&rt_sched_attr[0], sizeof(cpu_set_t), &threadcpu);
 
     // Sequencer = RT_MAX	@ 30 Hz
@@ -266,15 +283,12 @@ void *Sequencer(void *threadp)
     //syslog(LOG_CRIT, "Sequencer thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
     printf("Sequencer thread @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
-    //cycle through until abort is reached
     do
     {
         delay_cnt=0; residual=0.0;
 
         //gettimeofday(&current_time_val, (struct timezone *)0);
         //syslog(LOG_CRIT, "Sequencer thread prior to delay @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-
-        //add delay to sequencer
         do
         {
             rc=nanosleep(&delay_time, &remaining_time);
@@ -295,7 +309,7 @@ void *Sequencer(void *threadp)
 
         } while((residual > 0.0) && (delay_cnt < 100));
 
-
+        seqCnt++;
 
         gettimeofday(&current_time_val, (struct timezone *)0);
         printf("Sequencer cycle %llu @ sec=%d, msec=%d\n", seqCnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
@@ -312,22 +326,25 @@ void *Sequencer(void *threadp)
         // Servcie_1 = RT_MAX-1	@ every 20 msce
         if((seqCnt % 2) == 0) sem_post(&semS1);
 
-        // Service_2 = RT_MAX-2	@ every 100 msec
-        if((seqCnt % 10) == 0) sem_post(&semS2);
+        // Service_2 = RT_MAX-2	@ every 50 msec
+        if((seqCnt % 5) == 0) sem_post(&semS2);
 
-        // Service_3 = RT_MAX-3	@ every 150 msec
-        if((seqCnt % 15) == 0) sem_post(&semS3);
+        // Service_3 = RT_MAX-3	@ every 70 msec
+        if((seqCnt % 7) == 0) sem_post(&semS3);
+
+        // Service_4 = RT_MAX-3	@ every 130 msec
+        if((seqCnt % 13) == 0) sem_post(&semS4);
+
 
 
         //gettimeofday(&current_time_val, (struct timezone *)0);
         //syslog(LOG_CRIT, "Sequencer release all sub-services @ sec=%d, msec=%d\n", (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
-        seqCnt++;
 
     } while(!abortTest && (seqCnt < threadParams->sequencePeriods));
 
-    //unlock the semaphores and signal abort
-    sem_post(&semS1); sem_post(&semS2); sem_post(&semS3);
-    abortS1=TRUE; abortS2=TRUE; abortS3=TRUE;
+    sem_post(&semS1); sem_post(&semS2); sem_post(&semS3);sem_post(&semS4);
+
+    abortS1=TRUE; abortS2=TRUE; abortS3=TRUE;abortS4=TRUE;
 
 
     pthread_exit((void *)0);
@@ -368,6 +385,8 @@ void FIB_TEST(int seqCnt, int iterCnt)
      char *ser_name;
 
 
+
+
      //double current_time;
      unsigned long long S1Cnt=0;
      threadParams_t *threadParams = (threadParams_t *)threadp;
@@ -387,8 +406,7 @@ void FIB_TEST(int seqCnt, int iterCnt)
          sem_wait(&semS1);
          S1Cnt++;
          cpucore=sched_getcpu();
-         //log strt of thread run
-         syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:1]: Thread 1 start %llu @ sec=%d, msec=%d on core %d",
+         syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 1 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
             S1Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
          gettimeofday(&current_time_val, (struct timezone *)0);
          start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
@@ -396,7 +414,7 @@ void FIB_TEST(int seqCnt, int iterCnt)
           printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
          run_time = (int)getTimeMsec()+event_time;
 
-         //Call the fibonacci function for the amount of delay time
+
          while ((int)getTimeMsec() < run_time) {
            FIB_TEST(FIB_ITER, FIB_TEST_CYCLES);
          }
@@ -447,7 +465,7 @@ void *Service_2(void *threadp )
         S2Cnt++;
         cpucore=sched_getcpu();
         gettimeofday(&current_time_val, (struct timezone *)0);
-        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:1]: Thread 2 start %llu @ sec=%d, msec=%d on core %d",
+        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 2 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
            S2Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
 
 
@@ -506,7 +524,7 @@ void *Service_3(void *threadp )
         S3Cnt++;
         cpucore=sched_getcpu();
         gettimeofday(&current_time_val, (struct timezone *)0);
-        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:1]: Thread 3 start %llu @ sec=%d, msec=%d on core %d",
+        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 3 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
            S3Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
 
 
@@ -531,7 +549,63 @@ void *Service_3(void *threadp )
     pthread_exit((void *)0);
 }
 
+/*****************************************************************************
+* Service 4
+******************************************************************************/
 
+
+void *Service_4(void *threadp )
+{
+    struct timeval current_time_val;
+    int start_time, end_time;
+    int event_time,run_time, cpucore;
+    char *ser_name;
+
+
+
+    //double current_time;
+    unsigned long long S4Cnt=0;
+    threadParams_t *threadParams = (threadParams_t *)threadp;
+    event_time  = threadParams->event_time;
+    ser_name = threadParams->service_name;
+
+    gettimeofday(&current_time_val, (struct timezone *)0);
+    //syslog(LOG_CRIT, "%s thread @ sec=%d, msec=%d\n", ser_name,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    if (threadParams->debug_output)
+      printf("%s thread @ sec=%d, msec=%d\n", ser_name, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+
+
+
+    while(!abortS4)
+    {
+        sem_wait(&semS4);
+        S4Cnt++;
+        cpucore=sched_getcpu();
+        gettimeofday(&current_time_val, (struct timezone *)0);
+        syslog (LOG_DEBUG,"[COURSE:2][ASSIGNMENT:%d]: Thread 4 start %llu @ sec=%d, msec=%d on core %d",ASSIGNMENT,
+           S4Cnt,(int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC,cpucore);
+
+
+        start_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
+        if (threadParams->debug_output)
+          printf("# Service %s Start %llu @ sec=%d, msec=%d\n",ser_name, S4Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+        run_time = (int)getTimeMsec()+event_time;
+
+
+        while ((int)getTimeMsec() < run_time) {
+          FIB_TEST(FIB_ITER, FIB_TEST_CYCLES);
+        }
+        if (threadParams->debug_output) {
+          gettimeofday(&current_time_val, (struct timezone *)0);
+          printf("# Service %s Finish %llu @ sec=%d, msec=%d\n", ser_name, S4Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+          end_time = (int)current_time_val.tv_usec/USEC_PER_MSEC;
+          printf("# Service %s Run time %llu @, msec=%d\n",ser_name, S4Cnt,end_time-start_time);
+        }
+        //syslog(LOG_CRIT, "# Service S1 %llu @ sec=%d, msec=%d\n", S1Cnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
+    }
+
+    pthread_exit((void *)0);
+}
 
 
 

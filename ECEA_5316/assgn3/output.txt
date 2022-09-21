@@ -1,18 +1,18 @@
-Sep 15 13:33:15 localhost root: [COURSE:2][ASSIGNMENT:3]: Linux localhost 5.4.0-125-generic #141-Ubuntu SMP Wed Aug 10 13:42:03 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 1 @ sec=0, msec=392 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 2 @ sec=0, msec=413 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 1 @ sec=0, msec=443 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 3 @ sec=0, msec=433 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 4 @ sec=0, msec=454 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 2 @ sec=0, msec=494 on core 1
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 5 @ sec=0, msec=474 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 3 start 1 @ sec=0, msec=494 on core 1
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 6 @ sec=0, msec=494 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 7 @ sec=0, msec=514 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 3 @ sec=0, msec=545 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 8 @ sec=0, msec=535 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 9 @ sec=0, msec=555 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 10 @ sec=0, msec=575 on core 0
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 4 @ sec=0, msec=597 on core 1
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 3 start 2 @ sec=0, msec=605 on core 1
-Sep 15 13:33:15 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 4 start 1 @ sec=0, msec=606 on core 1
+Sep 19 08:35:01 localhost root: [COURSE:2][ASSIGNMENT:3]: Linux localhost 5.4.0-125-generic #141-Ubuntu SMP Wed Aug 10 13:42:03 UTC 2022 x86_64 x86_64 x86_64 GNU/Linux
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 1 @ sec=0, msec=418 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 2 @ sec=0, msec=439 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 1 @ sec=0, msec=469 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 3 @ sec=0, msec=459 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 4 @ sec=0, msec=480 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 5 @ sec=0, msec=500 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 2 @ sec=0, msec=530 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 3 start 1 @ sec=0, msec=540 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 6 @ sec=0, msec=521 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 7 @ sec=0, msec=541 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 3 @ sec=0, msec=571 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 8 @ sec=0, msec=561 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 9 @ sec=0, msec=581 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 1 start 10 @ sec=0, msec=603 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 2 start 4 @ sec=0, msec=632 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 3 start 2 @ sec=0, msec=642 on core 1
+Sep 19 08:35:01 localhost seqgen: [COURSE:2][ASSIGNMENT:3]: Thread 4 start 1 @ sec=0, msec=662 on core 1

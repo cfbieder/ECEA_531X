@@ -11,7 +11,9 @@
 // For example: Service_1 for camera frame aquisition
 //              Service_2 for image analysis and timestamping
 //              Service_3 for image processing (difference images)
-
+// Modified: Chris Biedermann
+// September 2022
+// Assignment 3
 
 #define _GNU_SOURCE
 
@@ -35,13 +37,14 @@
 #define TRUE (1)
 #define FALSE (0)
 
+//Define variables for number of runs of fibonacci routine
 #define FIB_TEST_CYCLES (100)
 #define FIB_ITER (100)
 
 #define ASSIGNMENT (3)
 
 //****************************************
-//Modified to only run 4 processes
+//Modified to  run 4 processes
 //****************************************
 #define NUM_THREADS (4+1)
 
@@ -129,8 +132,6 @@ int main(void)
     rc=sched_setscheduler(getpid(), SCHED_FIFO, &main_param);
     if(rc < 0) perror("main_param");
     print_scheduler();
-
-
     pthread_attr_getscope(&main_attr, &scope);
 
     if(scope == PTHREAD_SCOPE_SYSTEM)
@@ -147,12 +148,12 @@ int main(void)
     {
 
       CPU_ZERO(&threadcpu);
-      CPU_SET(3, &threadcpu);
+      CPU_SET(1, &threadcpu);
 
       rc=pthread_attr_init(&rt_sched_attr[i]);
       rc=pthread_attr_setinheritsched(&rt_sched_attr[i], PTHREAD_EXPLICIT_SCHED);
       rc=pthread_attr_setschedpolicy(&rt_sched_attr[i], SCHED_FIFO);
-      //rc=pthread_attr_setaffinity_np(&rt_sched_attr[i], sizeof(cpu_set_t), &threadcpu);
+      rc=pthread_attr_setaffinity_np(&rt_sched_attr[i], sizeof(cpu_set_t), &threadcpu);
 
       rt_param[i].sched_priority=rt_max_prio-i;
       pthread_attr_setschedparam(&rt_sched_attr[i], &rt_param[i]);
@@ -240,6 +241,11 @@ int main(void)
     printf("Start sequencer\n");
     threadParams[0].sequencePeriods=20;
 
+    // run sequencer on core 0
+    CPU_ZERO(&threadcpu);
+    CPU_SET(0, &threadcpu);
+    rc=pthread_attr_setaffinity_np(&rt_sched_attr[0], sizeof(cpu_set_t), &threadcpu);
+
     // Sequencer = RT_MAX	@ 30 Hz
     //
     rt_param[0].sched_priority=rt_max_prio;
@@ -303,8 +309,8 @@ void *Sequencer(void *threadp)
 
         } while((residual > 0.0) && (delay_cnt < 100));
 
+          seqCnt++;
 
-        seqCnt++;
         gettimeofday(&current_time_val, (struct timezone *)0);
         printf("Sequencer cycle %llu @ sec=%d, msec=%d\n", seqCnt, (int)(current_time_val.tv_sec-start_time_val.tv_sec), (int)current_time_val.tv_usec/USEC_PER_MSEC);
 
@@ -328,6 +334,7 @@ void *Sequencer(void *threadp)
 
         // Service_4 = RT_MAX-3	@ every 150 msec
         if((seqCnt % 20) == 0) sem_post(&semS4);
+
 
 
         //gettimeofday(&current_time_val, (struct timezone *)0);
